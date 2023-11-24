@@ -3,7 +3,7 @@ from functions import *
 #python3 knnAuthorship.py <vectors.csv> <ground_truth.csv> <k> [-o]
 
 def knn(vectors, gt, k, cos):
-    dist_mat = calc_dist_mat(vectors, cos)
+    dist_mat = calc_dist_mat(vectors, cos, gt)
     preds = []
     for row in dist_mat:
         neighbors = np.argsort(row)[1:k+1] #indices of k nearest neighbors
