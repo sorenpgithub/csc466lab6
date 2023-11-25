@@ -10,12 +10,17 @@ import argparse
 from datetime import datetime
 from sklearn.metrics import confusion_matrix
 
-
+"""
+returns parity author from given neighbors
+"""
 def get_pred(neighbors, gt):
     return gt.iloc[neighbors]["author"].mode()[0] #narrows down to only given documents, then looks at author column and returns parity
     #assumes matrix is in same order 
 
 
+"""
+generates confusion matrix, should be all 50x50 since actual has every label
+"""
 def generate_cm(preds, gt):
     authors = gt["author"].unique()
     pred_c = pd.Categorical(preds, categories=authors)
@@ -23,7 +28,9 @@ def generate_cm(preds, gt):
     cm = pd.crosstab(pred_c, actu_c, dropna=False) #dataframe, row represents predicted
     return cm
 
-
+"""
+cosine similarity, should be symmetric, referenced from stackoverflow
+"""
 def cosine_sim(v1,v2):
     return np.dot(v1, v2)/(LA.norm(v1)*LA.norm(v2))
 
@@ -40,6 +47,11 @@ def weight_vectors(vectors):
             vectors[j,i] = (vectors[j,i] / norm_fac) * np.log2(n / docf[i])
 
 
+
+"""
+Dense function, returns 2500x2500 numpy matrix of distances
+for okapi each row [i] will represent okapi similarity of all other documnets to document i. essentially row i is the query
+"""
 def calc_dist_mat(mat, okapi, gt):
     rows = mat.shape[0]
     dist = np.zeros((rows,rows))
@@ -53,7 +65,6 @@ def calc_dist_mat(mat, okapi, gt):
         dist = dist + dist.T
 
     else: #okapi is not symmetric so need to calculate everything
-        #each row [i] will represent okapi similarity of all other documnets to document i. essentially row i is the query
         numdocs = mat.shape[0]
         numwords = mat.shape[1]
         dl = list(gt["size"])
@@ -93,16 +104,22 @@ def calc_df(mat):
     return temp
 
 
-
-def split_txt(input_string):
+"""
+Fancy string parser used in vectorizer, accounts for apostrophes but removes numbers and other punctuation
+returns list
+"""
+def split_txt(input_strings):
     #fancy regex, \b are boundries, [a-zA-z] just means word must have a letter,
     # second chunk after + means take any letters after apostrophes,
     #drops all other punc, should be quick
-    words = re.findall(r"\b(?:[a-zA-Z]+(?:'[a-zA-Z]+)?)\b", input_string) #stolen from stackoverflow
+    words = re.findall(r"\b(?:[a-zA-Z]+(?:'[a-zA-Z]+)?)\b", input_strings) #stolen from stackoverflow
     return words
 
 
 
+"""
+writes truth csv with col names filename, author and size
+"""
 def write_truth(path, list_in): #assumes path is path name, list_in is nested list of ground truths
     filename, author, size = zip(*list_in) #essentially a reverse zip
     df = pd.DataFrame({"filename":filename, "author":author, "size":size})
@@ -125,6 +142,9 @@ def write_vocab(vocab, stem, stop): #going to be of the form {word:[f1, .., fn]}
     df.to_csv(out_name, index=False) #will overwrite if already exists
 
 
+"""
+converts numpy matrix to dist path with comma seperated values, should be csv
+"""
 def write_dist_mat(dist_mat, name):
     np.savetxt(name, dist_mat, delimiter=',')
 
@@ -140,11 +160,20 @@ def write_output(df, program_name):
     df.to_csv(path, index=True, header=False)
 
 
+"""
+parse in stop file, if no stopfile will return empty set with stop set to false
+reasoning for stop boolean is to prevent unneeded checking stopset
+finding items in set should be O(1) though.
+"""
 def parse_stop(path):
-    with open(path, 'r') as file:
-        text = file.read()
-        word_set = set(text.split())
-    return word_set
+    if path is not None:
+        with open(path, 'r') as file:
+            text = file.read()
+            word_set = set(text.split())
+        return word_set, True
+    else:
+        return set(), False
+
 
 """
 want vec to be numpy array such that each row is document and each column is word

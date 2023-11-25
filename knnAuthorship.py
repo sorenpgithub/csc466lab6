@@ -3,9 +3,11 @@ from functions import *
 #python3 knnAuthorship.py <vectors.csv> <ground_truth.csv> <k> [-o]
 
 def knn(vectors, gt, k, okapi, dist_name, dist_in):
+    
     if dist_in is None:
+        #calculates numpy matrix 2500x2500 of similarity metric. row represents query and column is d_j
         dist_mat = calc_dist_mat(vectors, okapi, gt)
-        write_dist_mat(dist_mat, dist_name)
+        write_dist_mat(dist_mat, dist_name) #will write the metric to the distmats dir with uniqueish name
     else:
         dist_mat = parse_dist(dist_in)
     preds = []
@@ -19,28 +21,28 @@ def knn(vectors, gt, k, okapi, dist_name, dist_in):
     return preds
 
 
-
-
-
-def main():
-
+def parse_cmd():
     parser = argparse.ArgumentParser(
         prog = "knnAuthorship.py",
-        description = "Predicts authors given a vectorized version of word stuff blah")
+        description = "Predicts authors given a vectorized version of word stuff blah blah")
     parser.add_argument("vectors", help="vectors.csv, frequency csv file")
     parser.add_argument("gt", help="ground_truth.csv, ground truth file as defined in documentaiton")
     parser.add_argument("k", help="number of neighbors for K-nearest neighbors", type=int)
     parser.add_argument("-o", "--okapi", help="use okapi-BM25 similarity metric", action="store_true")
     parser.add_argument("-d", "--distance", nargs="?", help="pre-calculated distance matrix, insert filename path after", default=None)
-    args = parser.parse_args()
-
-    dist_name = create_dist_path(args.vectors, args.okapi)
+    return parser.parse_args()
 
 
-    vec, words = parse_vec(args.vectors)
-    gt = parse_gt(args.gt)
-    preds = knn(vec, gt, args.k, args.okapi, dist_name, dist_in=args.distance)
-    preds = pd.Series(preds)
+def main():
+
+    args = parse_cmd()
+
+    dist_name = create_dist_path(args.vectors, args.okapi)#this will create a unique dist name based on the stemming, stop and okapi parameters
+
+    vec, words = parse_vec(args.vectors) #numpy matrix where each row is a document and column is a word
+    gt = parse_gt(args.gt) #ground truth file each row is document with filename, author and size in bytes. 
+    preds = knn(vec, gt, args.k, args.okapi, dist_name, dist_in=args.distance) #returns list of predictions
+    preds = pd.Series(preds) #convert to series so can be written to csv
     write_output(preds, "knn")
     
 

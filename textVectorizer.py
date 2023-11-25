@@ -11,6 +11,7 @@ def vectorizer(dirpath, size, stem, stop, stop_set):
     ground_tru = [()] * size
 
     i = 0 #current document
+    print("started")
     for root, dirs, files in os.walk(dirpath):
 
         for author in dirs: #name of dir, in this case the author
@@ -50,29 +51,25 @@ def vectorizer(dirpath, size, stem, stop, stop_set):
     return vocab, ground_tru
             
 
+def parse_cmd():
+    parser = argparse.ArgumentParser(
+        prog = "textVectorizer.py",
+        description = "vectorizes file based on term frequency and exports to vector")
+    parser.add_argument("root", help="training root directory of authors")
+    parser.add_argument("-sfile", "--stopfile", nargs="?", help="textfile of stopwords", default=None)
+    parser.add_argument("-st", "--stem", help="use snoball stemming", action="store_true")
+    return parser.parse_args()
 
 
 def main():
-    if len(sys.argv) == 1:
-        print("textVectorizer.py <root_dir> [stopwords.txt] [-st (stemming, locked to snoball)]")
-        quit()
     size = 2500 #hardcoded for now due to use of np arrays
-    stem = False
-    stop = False
-    stop_set = set()
+    args = parse_cmd()
+    stop_set, stop = parse_stop(args.stopfile)
 
-    if "-s" in sys.argv:
-        stem = True
-
-    if "stopwords.txt" in sys.argv: #change to be flexible!!!
-        stop = True #silent mode
-        stop_set = parse_stop("stopwords.txt")
-
-    root_dir = sys.argv[1]
-    vocab, ground_tru = vectorizer(root_dir, size, stem, stop, stop_set) #dirpath, size, stem, stop, stop_set
+    vocab, ground_tru = vectorizer(args.root, size, args.stem, stop, stop_set) #dirpath, size, stem, stop, stop_set
     #groun
 
-    write_vocab(vocab, stem, stop)
+    write_vocab(vocab, args.stem, stop)
     write_truth("ground_truth.csv", ground_tru) #ground truth will be csv of form [filename, author, filesize (bytes)]
 
     print("done")
