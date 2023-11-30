@@ -10,10 +10,6 @@ also need overall values of above
 """
 def generate_mets(cm):
     #cm is a numpy array by default (since it is an sklearn confusion matrix)
-
-    #From https://stackoverflow.com/questions/31324218/scikit-learn-how-to-obtain-true-positive-true-negative-false-positive-and-fal
-    #switched the axis though, because the stackoverflow case was based on that predictions were the colomns
-    #and our confusion matrix has prediction as row
     
     # cm: predictions as rows, actuals as columns
     TP = np.diag(cm)
