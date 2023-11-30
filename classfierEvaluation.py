@@ -18,15 +18,26 @@ def generate_mets(cm):
     TP = np.diag(cm)
     TN = cm.values.sum() - (FP + FN + TP)
 
-    precision = TP / (TP + FP) if (TP + FP) > 0 else 0
-    recall = TP / (TP + FN) if (TP + FN) > 0 else 0
-    f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
-    accuracy = (TP + TN) / (TP + TN + FP + FN) if (TP + TN + FP + FN) > 0 else 0
+    precision = np.where((TP + FP) > 0, TP / (TP + FP), 0) #if TP + FP > 0, otherwise 0
+    recall = np.where((TP + FN) > 0, TP / (TP + FN), 0)
+    f1 = np.where((precision + recall) > 0, 2 * (precision * recall) / (precision + recall), 0)
+    accuracy = np.where((TP + TN + FP + FN) > 0, (TP + TN) / (TP + TN + FP + FN), 0)
 
     mets = []
-    #for author in len(cm):
-    pass
-    #return TP, FP, TN, precision, recall, f1
+    for i in range(50):
+        author = []
+        author.append(TP[i], FP[i], TN[i], precision[i], recall[i], f1[i])
+        mets.append(author)
+    
+    tot_tp, tot_fp, tot_tn, tot_fn  = np.sum(TP), np.sum(FP), np.sum(TN), np.sum(FN)
+    tot_prec = tot_tp / (tot_tp + tot_fp) if (tot_tp + tot_fp) > 0 else 0
+    tot_recall = tot_tp / (tot_tp + tot_fn) if (tot_tp + tot_fn) > 0 else 0
+    tot_f1 = (2*tot_prec*tot_recall)/(tot_prec+tot_recall) if (tot_prec+tot_recall)>0 else 0
+
+    tot = []
+    tot.append(tot_tp, tot_fp, tot_tn, tot_prec, tot_recall, tot_f1)
+    mets.append(tot)
+    return mets
 """
 Mets [AUTHOR1(tp, fp, misses, precision, recall, f1), AUTHOR2(...)..., TOTAL(tp,..f1)]
 if silent only print last one
