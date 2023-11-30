@@ -9,24 +9,26 @@ need precision, recall and f1 measure
 also need overall values of above
 """
 def generate_mets(cm):
+    #cm is a numpy array by default (since it is an sklearn confusion matrix)
 
     #From https://stackoverflow.com/questions/31324218/scikit-learn-how-to-obtain-true-positive-true-negative-false-positive-and-fal
     #switched the axis though, because the stackoverflow case was based on that predictions were the colomns
     #and our confusion matrix has prediction as row
-    FP = cm.sum(axis=1) - np.diag(cm)  
-    FN = cm.sum(axis=0) - np.diag(cm)
+    
+    # cm: predictions as rows, actuals as columns
     TP = np.diag(cm)
+    FP = cm.sum(axis=1) - TP
+    FN = cm.sum(axis=0) - TP
     TN = cm.values.sum() - (FP + FN + TP)
 
     precision = np.where((TP + FP) > 0, TP / (TP + FP), 0) #if TP + FP > 0, otherwise 0
     recall = np.where((TP + FN) > 0, TP / (TP + FN), 0)
     f1 = np.where((precision + recall) > 0, 2 * (precision * recall) / (precision + recall), 0)
-    accuracy = np.where((TP + TN + FP + FN) > 0, (TP + TN) / (TP + TN + FP + FN), 0)
+    #accuracy = np.where((TP + TN + FP + FN) > 0, (TP + TN) / (TP + TN + FP + FN), 0)
 
     mets = []
-    for i in range(50):
-        author = []
-        author.append(TP[i], FP[i], TN[i], precision[i], recall[i], f1[i])
+    for i in range(len(TP)): #len(TP) = 50 for this lab
+        author = [TP[i], FP[i], TN[i], precision[i], recall[i], f1[i]]
         mets.append(author)
     
     tot_tp, tot_fp, tot_tn, tot_fn  = np.sum(TP), np.sum(FP), np.sum(TN), np.sum(FN)
@@ -34,8 +36,7 @@ def generate_mets(cm):
     tot_recall = tot_tp / (tot_tp + tot_fn) if (tot_tp + tot_fn) > 0 else 0
     tot_f1 = (2*tot_prec*tot_recall)/(tot_prec+tot_recall) if (tot_prec+tot_recall)>0 else 0
 
-    tot = []
-    tot.append(tot_tp, tot_fp, tot_tn, tot_prec, tot_recall, tot_f1)
+    tot = [tot_tp, tot_fp, tot_tn, tot_prec, tot_recall, tot_f1]
     mets.append(tot)
     return mets
 """
