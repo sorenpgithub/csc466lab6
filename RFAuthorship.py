@@ -15,13 +15,11 @@ Set: can set a standard threshold, and commit to using either information gain o
 the Random forest should give each word a chance to participate in helping recognize authorship) --> should we check this in some way?
 """
 
-def rf(vectors, gt, k, okapi, dist_name, dist_in):
+def rf(vectors, gt, numTrees, numAttr, numPts, thres, dist_name, dist_in):
   pass
 
 
 #The output of each program shall be an authorship label predicted for each of the documents in the Reuters50-50 dataset.
-
-
 def main():
     if len(sys.argv) == 1:
         print("RFAuthorship.py <vectors.csv> <gt.csv> <numTrees> <numAttr> <numPts> <threshold> ")
