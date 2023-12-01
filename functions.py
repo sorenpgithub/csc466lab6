@@ -67,11 +67,11 @@ def calc_dist_mat(mat, okapi, gt):
     else: #okapi is not symmetric so need to calculate everything
         numdocs = mat.shape[0]
         numwords = mat.shape[1]
-        dl = list(gt["size"])
-        avdl = gt["size"].mean()
-        k1 = 1.5
-        b = 0.75
-        k2 = 300
+        dl = list(gt["size"]) #length of document dj (in bytes)
+        avdl = gt["size"].mean() #average length (in bytes) of a document in D
+        k1 = 1.5 #normalization parameter for dj, 1.0 − 2.0
+        b = 0.75 #normalization parameter for document length usually 0.75
+        k2 = 300 #normalization parameter for query q 1 − 1000
         docf = calc_df(mat) #numpy array of document frequencies for word i
 
         for q in range(rows): #row number so each row is query
