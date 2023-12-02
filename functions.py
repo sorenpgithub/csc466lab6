@@ -10,6 +10,11 @@ import argparse
 from datetime import datetime
 from sklearn.metrics import confusion_matrix
 
+
+"returns mode of row"
+def find_mode(row): #minor helper func
+    return row.mode().iloc[0]
+
 """
 returns parity author from given neighbors
 """
@@ -178,10 +183,11 @@ def parse_stop(path):
 """
 want vec to be numpy array such that each row is document and each column is word
 """
-def parse_vec(path):
+def parse_vec(path, mat = True):
     df = pd.read_csv(path)
     words = df.columns
-    matr = df.to_numpy()
+    if mat:
+        matr = df.to_numpy()
     print("vectors parsed")
     return matr, words
 

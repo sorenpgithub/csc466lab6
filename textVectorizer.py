@@ -24,7 +24,7 @@ def vectorizer(dirpath, size, stem, stop, stop_set):
             for file in txtfiles:
 
                 file_path = os.path.join(author_path, file)
-                file_size = os.path.getsize(file_path)
+                file_size = os.path.getsize(file_path) #returns in bytes
                 ground_tru[i] = (file, author, file_size)#assigns ground truth value
                 #ensures vectorizer is in same order of ground truth 
                 with open(file_path, 'r') as curr:
@@ -51,6 +51,9 @@ def vectorizer(dirpath, size, stem, stop, stop_set):
     return vocab, ground_tru
             
 
+"""
+Learned how to use argparse, pretty fancy shmancy
+"""
 def parse_cmd():
     parser = argparse.ArgumentParser(
         prog = "textVectorizer.py",
