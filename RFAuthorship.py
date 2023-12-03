@@ -45,7 +45,8 @@ Helper function for edge cases
 Constructs and returns a leaf node for a decision tree based on the most frequent class label
 """
 def create_node(D):
-    temp = find_freqlab(D) #should be whatever datatype c_i is
+    aut = "author"
+    temp = find_freqlab(D, aut) #should be whatever datatype c_i is
     r = {"leaf":{}}#create node with label of only class label STAR
     r["leaf"]["decision"] = temp[0]
     r["leaf"]["p"] = temp[1]
@@ -66,9 +67,10 @@ def find_freqlab(D, class_var): #assuming D is df
 Finds split with maximum gain for continuous variable A_i by iterating over all unique values
 """
 def findBestSplit(A_i, D):
+    aut = "author"
     vals = D[A_i].unique()
     gains = []
-    p0 = enthropy(D)
+    p0 = enthropy(D, aut)
     for val in vals:
         ent = enthropy_val(val, A_i, D)
         gain = p0 - ent
@@ -81,14 +83,15 @@ def findBestSplit(A_i, D):
 Helpfer function in calculating enthropy of split at \alpha
 """
 def enthropy_val(alpha, A_i, D):
-  D_left = D[D[A_i] <= alpha]
-  D_right = D[D[A_i] > alpha]
-  x = D_left.shape[0] * enthropy(D_left)
-  y = D_right.shape[0] * enthropy(D_right)
-  z = D.shape[0]
-  sum = (x/z) + (y/z)
-  #print(sum)
-  return sum
+    aut = "author"
+    D_left = D[D[A_i] <= alpha]
+    D_right = D[D[A_i] > alpha]
+    x = D_left.shape[0] * enthropy(D_left, aut)
+    y = D_right.shape[0] * enthropy(D_right, aut)
+    z = D.shape[0]
+    sum = (x/z) + (y/z)
+    #print(sum)
+    return sum
 
 
 """
@@ -110,20 +113,21 @@ def enthropy(D, class_var):
 splitting
 """
 def selectSplittingAttribute(A, D, threshold): #information gain
-  p0 = enthropy(D) #\in (0,1) -sum
-  gain = [0] * len(A)
-  for i, A_i in enumerate(A): #i is index, A_i is string of col name
-        x = findBestSplit(A_i, D)
-        p_i = enthropy_val(x, A_i, D) #double check to make sure right entropy
-    #print(p0, p_i)
-        gain[i] = p0 - p_i 
-  #print(gain)
-  m = max(gain) #fidning the maximal info gain
-  if m > threshold:
-        max_ind = gain.index(m) #finding the list index of the maximal info gain
-        return A[max_ind] #returns the attribute that had the maximal info gain
-  else:
-        return None
+    aut = "author" #just for simplicity, needed due to redundancies in c45 alg implementation
+    p0 = enthropy(D, aut) #\in (0,1) -sum
+    gain = [0] * len(A)
+    for i, A_i in enumerate(A): #i is index, A_i is string of col name
+            x = findBestSplit(A_i, D)
+            p_i = enthropy_val(x, A_i, D) #double check to make sure right entropy
+        #print(p0, p_i)
+            gain[i] = p0 - p_i 
+    #print(gain)
+    m = max(gain) #fidning the maximal info gain
+    if m > threshold:
+            max_ind = gain.index(m) #finding the list index of the maximal info gain
+            return A[max_ind] #returns the attribute that had the maximal info gain
+    else:
+            return None
 
 """
 Implements the C4.5 algorithm for building a decision tree 
@@ -132,15 +136,15 @@ Returns the (sub)tree T rooted at the current node
 NO CATEGORICAL VARIABLES!
 """
 def c45(D, A, threshold, class_var, doms, current_depth=0, max_depth=None): #going to do pandas approach, assume D is df and A is list of col names
-  #print("in C45")
-  #print("A: ", A)
-  #print(D[class_var])
-  #print(D[class_var].nunique())
+    #print("in C45")
+    #print("A: ", A)
+    #print(D[class_var])
+    #print(D[class_var].nunique())
     if (max_depth is not None and current_depth == max_depth) or D[class_var].nunique() == 1 or (not A):
     #print("bug")
         T = create_node(D)
 
-  #"Normal" case
+    #"Normal" case
     else:
         A_g = selectSplittingAttribute(A, D, threshold) #string of column name
         if A_g is None:
@@ -178,14 +182,14 @@ def c45(D, A, threshold, class_var, doms, current_depth=0, max_depth=None): #goi
 
 def parse_cmd():
     parser = argparse.ArgumentParser(
-        prog = "knnAuthorship.py",
+        prog = "RFAuthorship.py",
         description = "Predicts authors given a vectorized version of word stuff blah blah")
     parser.add_argument("vectors", help="vectors.csv, frequency csv file")
     parser.add_argument("gt", help="ground_truth.csv, ground truth file as defined in documentaiton")
     parser.add_argument("numtree", help="number of of trees in random forest", type=int)
     parser.add_argument("numatt", help="number of attributes in single decision tree", type=int)
     parser.add_argument("numdata", help="number of data points ", type=int)
-    parser.add_argument("threshold", help="threshold in C45 Algorithm", default=0.2, type=int)
+    parser.add_argument("threshold", help="threshold in C45 Algorithm", default=0.2, type=float)
     return parser.parse_args()
 
 
@@ -246,7 +250,7 @@ def rf(D, numtree, numatt, numdata, threshold):
         test_cols = list(train.columns) #column names
         test_cols.remove(aut)
         #test cols is due to redundancy from 
-        tree = c45(train, test_cols, threshold, doms)
+        tree = c45(train, test_cols, threshold, aut, doms)
         predictions = generate_preds(D, tree, aut)
         y_pred = pd.Series(predictions)
         
@@ -266,7 +270,9 @@ def main():
     
     vec = parse_vec(args.vectors, mat = False)  #tuple
     vec = pd.DataFrame(vec[0]) #should be dataframe
+    #want vec to be a dataframe
     gt = parse_gt(args.gt)
+    print(type(gt))
     D = pd.concat([vec, gt], axis=1) #merges dataframes by concat will be filename and size in here 
     preds = rf(D, args.numtree, args.numatt, args.numdata, args.threshold)
     write_output(preds, "rf")    
