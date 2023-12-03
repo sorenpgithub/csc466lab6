@@ -199,7 +199,10 @@ def parse_gt(path):
 
 "prediction csv will be of the form such that each row represents the prediction in order of the gt document"
 def parse_pred(path):
-    pass
+    df = pd.read_csv(path, header=None, index_col=0)
+    df.columns = ["predictions"]
+    return df
+
 
 def parse_dist(path):
     return np.loadtxt(path, delimiter=',')
