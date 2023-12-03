@@ -264,8 +264,8 @@ def rf(D, numtree, numatt, numdata, threshold):
 def main():
     args = parse_cmd()
     
-    vec = parse_vec(args.vectors, mat = False) #should be dataframe
-    #want vec to be a dataframe
+    vec = parse_vec(args.vectors, mat = False)  #tuple
+    vec = pd.DataFrame(vec[0]) #should be dataframe
     gt = parse_gt(args.gt)
     D = pd.concat([vec, gt], axis=1) #merges dataframes by concat will be filename and size in here 
     preds = rf(D, args.numtree, args.numatt, args.numdata, args.threshold)
