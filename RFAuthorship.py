@@ -1,4 +1,8 @@
 from functions import *
+
+#HOW TO RUN
+#python3 RFAuthorship.py vectors_stop.csv ground_truth.csv [numTrees] [numAttributes] [numPoints] [thresh]
+
 """
 Dataset to build individual trees in the forest is sufficient to prevent overfit), so, it should simply build the forest
 and make the predictions.
@@ -45,11 +49,13 @@ Helper function for edge cases
 Constructs and returns a leaf node for a decision tree based on the most frequent class label
 """
 def create_node(D):
+    print("in create_node")
     aut = "author"
     temp = find_freqlab(D, aut) #should be whatever datatype c_i is
     r = {"leaf":{}}#create node with label of only class label STAR
     r["leaf"]["decision"] = temp[0]
     r["leaf"]["p"] = temp[1]
+    print("r: ", r)
     return r #leaf with decision and prob
 
 """
@@ -57,6 +63,7 @@ Identifies the most frequent class label in the column specified by class_var
 Returns both the label and its probability
 """
 def find_freqlab(D, class_var): #assuming D is df
+    print("in find_freqlab")
     values = D[class_var].value_counts(normalize = True)
     c = values.idxmax()
     pr = values[c]
@@ -123,11 +130,14 @@ def selectSplittingAttribute(A, D, threshold): #information gain
             gain[i] = p0 - p_i 
     #print(gain)
     m = max(gain) #fidning the maximal info gain
+    print("max: ",  m)
     if m > threshold:
-            max_ind = gain.index(m) #finding the list index of the maximal info gain
-            return A[max_ind] #returns the attribute that had the maximal info gain
+        print("IN IF")
+        max_ind = gain.index(m) #finding the list index of the maximal info gain
+        return A[max_ind] #returns the attribute that had the maximal info gain
     else:
-            return None
+        ("IN ELSE")
+        return None
 
 """
 Implements the C4.5 algorithm for building a decision tree 
@@ -138,25 +148,32 @@ NO CATEGORICAL VARIABLES!
 def c45(D, A, threshold, class_var, doms, current_depth=0, max_depth=None): #going to do pandas approach, assume D is df and A is list of col names
     #print("in C45")
     #print("A: ", A)
-    #print(D[class_var])
+    #print("DCLASSVAR: ", D[class_var])
     #print(D[class_var].nunique())
+    class_var = "author" #hardcodede
     if (max_depth is not None and current_depth == max_depth) or D[class_var].nunique() == 1 or (not A):
+        print("HERE")
     #print("bug")
         T = create_node(D)
 
     #"Normal" case
     else:
+        print("THERE")
         A_g = selectSplittingAttribute(A, D, threshold) #string of column name
         if A_g is None:
-        #print("A_g none")
+            print("A_g none")
             T = create_node(D)
         else:
             r = {"node": {"var":A_g, "edges":[]} } #dblcheck with psuedo code
             T = r
+            print("doms: ", doms)
+            print("ag: ", A_g)
+            print(doms[A_g])
             for v in doms[A_g]: #iterate over each unique value (Domain) of attribute (South, West..)
                 D_v = D[D[A_g] == v] #dataframe with where attribute equals value
                 if not D_v.empty: #true if D_v \neq \emptyset
                         #print(A_temp)
+                    print("doms2: ", doms)
                     T_v = c45(D_v, A, threshold, current_depth + 1, max_depth, class_var, doms)
                         #temp = {"edge":{"value":v}}
                     #modify to contain edge value, look at lec06 example
@@ -169,13 +186,14 @@ def c45(D, A, threshold, class_var, doms, current_depth=0, max_depth=None): #goi
                         print("something is broken")
                     # r["node"]["edges"].append(temp)
                 else: #ghost node
-                #print("GHOST PATH")
-                    label_info = find_freqlab(D) #determines the most frequent class label and its proportion
+                    print("GHOST PATH")
+                    label_info = find_freqlab(D, "author") #determines the most frequent class label and its proportion
                     ghost_node = {"leaf":{}} #initialize a leaf node
                     ghost_node["leaf"]["decision"] = label_info[0] #set the decision to the most frequent class label
                     ghost_node["leaf"]["p"] = label_info[1] #set the probability or proportion
                     temp = {"edge": {"value": v, "leaf": ghost_node["leaf"]}}
                     r["node"]["edges"].append(temp)
+    print("T: ", T)
     return T
 
 
@@ -194,6 +212,7 @@ def parse_cmd():
 
 
 def generate_preds(D, tree, class_var):
+    print("in generate_preds")
     df_A = D.drop(class_var, axis = 1)#makes new df, not inplace
     pred = []
   
@@ -227,6 +246,7 @@ def generate_preds(D, tree, class_var):
                         leaf = True
                 
                     break #doesnt iterate over redundant edges
+        print(pred)
       #print("broken")
     return pred
 
@@ -241,6 +261,7 @@ def dom_dict(df):
 def rf(D, numtree, numatt, numdata, threshold):
     aut = "author" #just for simplicity, needed due to redundancies in c45 alg implementation
     doms = dom_dict(D)#define!
+    print("doms_org: ", doms)
     pred_df = pd.DataFrame() 
     
 
@@ -251,6 +272,7 @@ def rf(D, numtree, numatt, numdata, threshold):
         test_cols.remove(aut)
         #test cols is due to redundancy from 
         tree = c45(train, test_cols, threshold, aut, doms)
+        print("treeeeeee: ", tree)
         predictions = generate_preds(D, tree, aut)
         y_pred = pd.Series(predictions)
         
@@ -267,15 +289,17 @@ def rf(D, numtree, numatt, numdata, threshold):
 
 def main():
     args = parse_cmd()
-    
-    vec = parse_vec(args.vectors, mat = False)  #tuple
+    path = args.vectors
+    vec = parse_vec(path, mat = False)  #tuple
     vec = pd.DataFrame(vec[0]) #should be dataframe
     #want vec to be a dataframe
     gt = parse_gt(args.gt)
     print(type(gt))
     D = pd.concat([vec, gt], axis=1) #merges dataframes by concat will be filename and size in here 
     preds = rf(D, args.numtree, args.numatt, args.numdata, args.threshold)
+    print("preds::", preds)
     write_output(preds, "rf")    
+
 
 if __name__ == "__main__":
     main()
