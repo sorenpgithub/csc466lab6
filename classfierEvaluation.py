@@ -12,10 +12,10 @@ def generate_mets(cm):
     #cm is a numpy array by default (since it is an sklearn confusion matrix)
     
     # cm: predictions as rows, actuals as columns
-    TP = np.diag(cm)
-    FP = cm.sum(axis=1) - TP
-    FN = cm.sum(axis=0) - TP
-    TN = cm.values.sum() - (FP + FN + TP)
+    TP = np.diag(cm) #np.array of length 50 of the diagonal values
+    FP = cm.sum(axis=1) - TP #sum over the columns, returning length 50 array of all predictions, subtract by true posiitives
+    FN = cm.sum(axis=0) - TP #similar to above but over rows, indicating all predicted values
+    TN = cm.sum() - (FP + FN + TP) #TN 
 
     precision = np.where((TP + FP) > 0, TP / (TP + FP), 0) #if TP + FP > 0, otherwise 0
     recall = np.where((TP + FN) > 0, TP / (TP + FN), 0)
@@ -51,31 +51,22 @@ def parse_cmd():
     parser.add_argument("predictions", help="vectors.csv, frequency csv file")
     parser.add_argument("gt", help="ground_truth.csv, ground truth file as defined in documentaiton")
     parser.add_argument("silent", help="number of of trees in random forest", actions="store_true")
-    parser.add_argument("silent", help="number of of trees in random forest", actions="store_true")
+    parser.add_argument("write", help="number of of trees in random forest", actions="store_true")
 
 
 
 def main():
     args = parse_cmd()
     path = args.vectors
-
-    silent = False
-    write = False
-    if "-s" in sys.argv:
-        silent = True
-    if "-w" in sys.argv:
-        write = True
-
-    pred_in = sys.argv[1]
-    gt_in = sys.argv[2]
-    pred = parse_pred(pred_in) #pred is a dataframe such that each row represents the corresponding document prediction in gt with the author name
-    gt = parse_gt(gt_in)
-
+    pred = parse_pred(args.pred) #pred is a dataframe such that each row represents the corresponding document prediction in gt with the author name
+    gt = parse_gt(args.gt)
 
     cm = generate_cm(pred["prediction"], gt) #50 x50 confusion matrix, such that the row repersents predicted and colunn is actual
     mets = generate_mets(cm)
-    output_mets(mets, silent)
-    if write:
+
+    output_mets(mets, args.silent)
+    
+    if args.write:
         authors = gt["author"].unique() #should be in order of appearence, which should be same as confusion matrix
         cmdf = pd.DataFrame(cm, columns = authors)
         write_output(cmdf, "classifier")
