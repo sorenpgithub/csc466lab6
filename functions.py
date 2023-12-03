@@ -72,8 +72,8 @@ def calc_dist_mat(mat, okapi, gt):
     else: #okapi is not symmetric so need to calculate everything
         numdocs = mat.shape[0]
         numwords = mat.shape[1]
-        dl = list(gt["size"]) #length of document dj (in bytes)
-        avdl = gt["size"].mean() #average length (in bytes) of a document in D
+        dl = gt["file_size"].to_numpy()#length of document dj (in bytes)
+        avdl = np.mean(dl) #average length (in bytes) of a document in D
         k1 = 1.5 #normalization parameter for dj, 1.0 − 2.0
         b = 0.75 #normalization parameter for document length usually 0.75
         k2 = 300 #normalization parameter for query q 1 − 1000
@@ -127,7 +127,7 @@ writes truth csv with col names filename, author and size
 """
 def write_truth(path, list_in): #assumes path is path name, list_in is nested list of ground truths
     filename, author, size = zip(*list_in) #essentially a reverse zip
-    df = pd.DataFrame({"filename":filename, "author":author, "size":size})
+    df = pd.DataFrame({"filename":filename, "author_name":author, "file_size":size})
     df.to_csv(path, index=False)
 
 
@@ -184,12 +184,11 @@ def parse_stop(path):
 want vec to be numpy array such that each row is document and each column is word
 """
 def parse_vec(path, mat = True):
-    df = pd.read_csv(path)
-    words = df.columns
+    df = pd.read_csv(path, dtype=int)
     if mat:
-        matr = df.to_numpy()
+        df = df.to_numpy()
     print("vectors parsed")
-    return matr, words
+    return df
 
 
 """

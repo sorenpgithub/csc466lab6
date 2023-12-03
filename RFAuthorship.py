@@ -50,7 +50,7 @@ Constructs and returns a leaf node for a decision tree based on the most frequen
 """
 def create_node(D):
     print("in create_node")
-    aut = "author"
+    aut = "author_name"
     temp = find_freqlab(D, aut) #should be whatever datatype c_i is
     r = {"leaf":{}}#create node with label of only class label STAR
     r["leaf"]["decision"] = temp[0]
@@ -74,7 +74,7 @@ def find_freqlab(D, class_var): #assuming D is df
 Finds split with maximum gain for continuous variable A_i by iterating over all unique values
 """
 def findBestSplit(A_i, D):
-    aut = "author"
+    aut = "author_name"
     vals = D[A_i].unique()
     gains = []
     p0 = enthropy(D, aut)
@@ -90,7 +90,7 @@ def findBestSplit(A_i, D):
 Helpfer function in calculating enthropy of split at \alpha
 """
 def enthropy_val(alpha, A_i, D):
-    aut = "author"
+    aut = "author_name"
     D_left = D[D[A_i] <= alpha]
     D_right = D[D[A_i] > alpha]
     x = D_left.shape[0] * enthropy(D_left, aut)
@@ -120,7 +120,7 @@ def enthropy(D, class_var):
 splitting
 """
 def selectSplittingAttribute(A, D, threshold): #information gain
-    aut = "author" #just for simplicity, needed due to redundancies in c45 alg implementation
+    aut = "author_name" #just for simplicity, needed due to redundancies in c45 alg implementation
     p0 = enthropy(D, aut) #\in (0,1) -sum
     gain = [0] * len(A)
     for i, A_i in enumerate(A): #i is index, A_i is string of col name
@@ -150,7 +150,7 @@ def c45(D, A, threshold, class_var, doms, current_depth=0, max_depth=None): #goi
     #print("A: ", A)
     #print("DCLASSVAR: ", D[class_var])
     #print(D[class_var].nunique())
-    class_var = "author" #hardcodede
+    class_var = "author_name" #hardcodede
     if (max_depth is not None and current_depth == max_depth) or D[class_var].nunique() == 1 or (not A):
         print("HERE")
     #print("bug")
@@ -158,23 +158,24 @@ def c45(D, A, threshold, class_var, doms, current_depth=0, max_depth=None): #goi
 
     #"Normal" case
     else:
-        print("THERE")
+        #print("THERE")
         A_g = selectSplittingAttribute(A, D, threshold) #string of column name
         if A_g is None:
-            print("A_g none")
+            #print("A_g none")
             T = create_node(D)
         else:
             r = {"node": {"var":A_g, "edges":[]} } #dblcheck with psuedo code
             T = r
-            print("doms: ", doms)
-            print("ag: ", A_g)
-            print(doms[A_g])
+            # print("doms: ", doms)
+            # print("ag: ", A_g)
+            # print(doms[A_g])
             for v in doms[A_g]: #iterate over each unique value (Domain) of attribute (South, West..)
                 D_v = D[D[A_g] == v] #dataframe with where attribute equals value
+                
                 if not D_v.empty: #true if D_v \neq \emptyset
                         #print(A_temp)
                     print("doms2: ", doms)
-                    T_v = c45(D_v, A, threshold, current_depth + 1, max_depth, class_var, doms)
+                    T_v = c45(D_v, A, threshold, class_var, doms, current_depth + 1, max_depth)
                         #temp = {"edge":{"value":v}}
                     #modify to contain edge value, look at lec06 example
                     temp = {"edge":{"value":v}}
@@ -184,16 +185,18 @@ def c45(D, A, threshold, class_var, doms, current_depth=0, max_depth=None): #goi
                         temp["edge"]["leaf"] = T_v["leaf"]
                     else:
                         print("something is broken")
-                    # r["node"]["edges"].append(temp)
+                        
                 else: #ghost node
-                    print("GHOST PATH")
-                    label_info = find_freqlab(D, "author") #determines the most frequent class label and its proportion
+                    #print("GHOST PATH")
+                    label_info = find_freqlab(D, "author_name") #determines the most frequent class label and its proportion
                     ghost_node = {"leaf":{}} #initialize a leaf node
                     ghost_node["leaf"]["decision"] = label_info[0] #set the decision to the most frequent class label
                     ghost_node["leaf"]["p"] = label_info[1] #set the probability or proportion
                     temp = {"edge": {"value": v, "leaf": ghost_node["leaf"]}}
-                    r["node"]["edges"].append(temp)
-    print("T: ", T)
+                
+                
+                r["node"]["edges"].append(temp)
+    #print("T: ", T)
     return T
 
 
@@ -259,7 +262,7 @@ def dom_dict(df):
 
 
 def rf(D, numtree, numatt, numdata, threshold):
-    aut = "author" #just for simplicity, needed due to redundancies in c45 alg implementation
+    aut = "author_name" #just for simplicity, needed due to redundancies in c45 alg implementation
     doms = dom_dict(D)#define!
     print("doms_org: ", doms)
     pred_df = pd.DataFrame() 
@@ -271,8 +274,10 @@ def rf(D, numtree, numatt, numdata, threshold):
         test_cols = list(train.columns) #column names
         test_cols.remove(aut)
         #test cols is due to redundancy from 
+        
+        
         tree = c45(train, test_cols, threshold, aut, doms)
-        print("treeeeeee: ", tree)
+        print("tree: ", tree)
         predictions = generate_preds(D, tree, aut)
         y_pred = pd.Series(predictions)
         
@@ -290,12 +295,11 @@ def rf(D, numtree, numatt, numdata, threshold):
 def main():
     args = parse_cmd()
     path = args.vectors
-    vec = parse_vec(path, mat = False)  #tuple
-    vec = pd.DataFrame(vec[0]) #should be dataframe
-    #want vec to be a dataframe
+    vec = parse_vec(path, mat = False) #want vec to be a dataframe
     gt = parse_gt(args.gt)
-    print(type(gt))
+    print(vec.head())
     D = pd.concat([vec, gt], axis=1) #merges dataframes by concat will be filename and size in here 
+    D.drop(["size", "filename"], axis = 1, inplace = True)
     preds = rf(D, args.numtree, args.numatt, args.numdata, args.threshold)
     print("preds::", preds)
     write_output(preds, "rf")    

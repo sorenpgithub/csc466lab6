@@ -43,10 +43,22 @@ def output_mets(mets, silent):
     #print("mets:", mets)
     pass
 
+
+def parse_cmd():
+    parser = argparse.ArgumentParser(
+        prog = "classifierEvaluation.py",
+        description = "Predicts authors given a vectorized version of word stuff blah blah")
+    parser.add_argument("predictions", help="vectors.csv, frequency csv file")
+    parser.add_argument("gt", help="ground_truth.csv, ground truth file as defined in documentaiton")
+    parser.add_argument("silent", help="number of of trees in random forest", actions="store_true")
+    parser.add_argument("silent", help="number of of trees in random forest", actions="store_true")
+
+
+
 def main():
-    if len(sys.argv) == 1:
-        print("classifierEvaluation.py <pred.csv> <gt.csv>")
-        quit()
+    args = parse_cmd()
+    path = args.vectors
+
     silent = False
     write = False
     if "-s" in sys.argv:
@@ -58,6 +70,8 @@ def main():
     gt_in = sys.argv[2]
     pred = parse_pred(pred_in) #pred is a dataframe such that each row represents the corresponding document prediction in gt with the author name
     gt = parse_gt(gt_in)
+
+
     cm = generate_cm(pred["prediction"], gt) #50 x50 confusion matrix, such that the row repersents predicted and colunn is actual
     mets = generate_mets(cm)
     output_mets(mets, silent)

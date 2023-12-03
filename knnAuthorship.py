@@ -39,7 +39,7 @@ def main():
 
     dist_name = create_dist_path(args.vectors, args.okapi)#this will create a unique dist name based on the stemming, stop and okapi parameters
 
-    vec, words = parse_vec(args.vectors) #numpy matrix where each row is a document and column is a word
+    vec = parse_vec(args.vectors) #numpy matrix where each row is a document and column is a word
     gt = parse_gt(args.gt) #ground truth file each row is document with filename, author and size in bytes. 
     preds = knn(vec, gt, args.k, args.okapi, dist_name, dist_in=args.distance) #returns list of predictions
     preds = pd.Series(preds) #convert to series so can be written to csv
