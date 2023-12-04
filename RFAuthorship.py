@@ -302,7 +302,8 @@ def main():
     D.drop(["size", "filename"], axis = 1, inplace = True)
     preds = rf(D, args.numtree, args.numatt, args.numdata, args.threshold)
     print("preds::", preds)
-    write_output(preds, "rf")    
+    #write_output(preds, "rf")    
+    write_output_rf(preds, args.numtree, args.numatt, args.numdata)
 
 
 if __name__ == "__main__":
