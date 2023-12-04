@@ -164,6 +164,12 @@ def write_output(df, program_name):
     path = f"{program_name}outputs/{name}"
     df.to_csv(path, index=True, header=False)
 
+def write_output_rf(df, numTree, numAttr, numData):
+    program_name = 'rf'
+    name = f"tree{numTree}_attr{numAttr}_data{numData}.csv"
+    path = f"{program_name}outputs/{name}"
+    df.to_csv(path, index=True, header=False)
+
 
 """
 parse in stop file, if no stopfile will return empty set with stop set to false
