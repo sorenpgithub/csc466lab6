@@ -24,13 +24,23 @@ def generate_mets(cm):
 
     mets = []
     for i in range(len(TP)): #len(TP) = 50 for this lab
-        author = [TP[i], FP[i], TN[i], precision[i], recall[i], f1[i]]
+        author = []
+        author.append(TP[i])
+        author.append(FP[i])
+        author.append(TN[i])
+        author.append(precision[i])
+        author.append(recall[i])
+        author.append(f1[i])
+        #author.append(accuracy[i])
         mets.append(author)
+
     
     tot_tp, tot_fp, tot_tn, tot_fn  = np.sum(TP), np.sum(FP), np.sum(TN), np.sum(FN)
     tot_prec = tot_tp / (tot_tp + tot_fp) if (tot_tp + tot_fp) > 0 else 0
     tot_recall = tot_tp / (tot_tp + tot_fn) if (tot_tp + tot_fn) > 0 else 0
     tot_f1 = (2*tot_prec*tot_recall)/(tot_prec+tot_recall) if (tot_prec+tot_recall)>0 else 0
+    #tot_accuracy = (tot_tp + tot_tn) / (tot_tp + tot_tn + tot_fp + tot_fn) if (tot_tp + tot_tn + tot_fp + tot_fn)>0 else 0
+
 
     tot = [tot_tp, tot_fp, tot_tn, tot_prec, tot_recall, tot_f1]
     mets.append(tot)
