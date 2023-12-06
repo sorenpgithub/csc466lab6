@@ -7,8 +7,8 @@ import csv
 import os
 import re
 import argparse
+from multiprocessing import Pool, cpu_count
 from datetime import datetime
-from sklearn.metrics import confusion_matrix
 
 
 "returns mode of row"
@@ -19,7 +19,7 @@ def find_mode(row): #minor helper func
 returns parity author from given neighbors
 """
 def get_pred(neighbors, gt):
-    return gt.iloc[neighbors]["author"].mode()[0] #narrows down to only given documents, then looks at author column and returns parity
+    return gt.iloc[neighbors]["author_name"].mode()[0] #narrows down to only given documents, then looks at author column and returns parity
     #assumes matrix is in same order 
 
 
@@ -27,7 +27,7 @@ def get_pred(neighbors, gt):
 generates confusion matrix, should be all 50x50 since actual has every label
 """
 def generate_cm(preds, gt):
-    authors = gt["author"].unique()
+    authors = gt["author_name"].unique()
     pred_c = pd.Categorical(preds, categories=authors)
     actu_c = pd.Categorical(gt["author"], categories=authors)
     cm = pd.crosstab(pred_c, actu_c, dropna=False) #dataframe, row represents predicted
@@ -57,7 +57,8 @@ def weight_vectors(vectors):
 Dense function, returns 2500x2500 numpy matrix of distances
 for okapi each row [i] will represent okapi similarity of all other documnets to document i. essentially row i is the query
 """
-def calc_dist_mat(mat, okapi, gt):
+def calc_dist_mat(mat, okapi, gt, multi = False):
+    print("in dist mat3")
     rows = mat.shape[0]
     dist = np.zeros((rows,rows))
     if not okapi: #cosine symmalirty is symmetric
@@ -70,31 +71,87 @@ def calc_dist_mat(mat, okapi, gt):
         dist = dist + dist.T
 
     else: #okapi is not symmetric so need to calculate everything
-        numdocs = mat.shape[0]
-        numwords = mat.shape[1]
-        dl = gt["file_size"].to_numpy()#length of document dj (in bytes)
-        avdl = np.mean(dl) #average length (in bytes) of a document in D
-        k1 = 1.5 #normalization parameter for dj, 1.0 − 2.0
-        b = 0.75 #normalization parameter for document length usually 0.75
-        k2 = 300 #normalization parameter for query q 1 − 1000
-        docf = calc_df(mat) #numpy array of document frequencies for word i
+        if multi:
+            dist = calculate_distance_parallel(mat, gt) #reference below
 
-        for q in range(rows): #row number so each row is query
-            for j in range(rows): #column number, each column is d_j
-                if j != q: #want similarity to itself to be 0, for knn reasons
-                    sum = 0
-                    for i in range(numwords): #mat.shape is number of columns in matrix, aka number of words
-                        docf[i] 
-                        x = np.log((numdocs - docf[i] + 0.5) / (docf[i] + 0.5))
-                        y =  ((k1 + 1) * mat[j,i])  /  (k1 * (1 - b + (b * (dl[j]/avdl))))  #this is so hard to read but just check documentation
-                        z = ((k2 + 1)*mat[q,i])/(k2 + mat[q,i])
-                        #note that mat[j,i] is frequency of word i on document j, similar for q
-                        sum += x * y * z
-                    
-                    dist[q,j] = sum
+        else:
+            numdocs = mat.shape[0]
+            numwords = mat.shape[1]
+            dl = gt["file_size"].to_numpy()#length of document dj (in bytes)
+            avdl = np.mean(dl) #average length (in bytes) of a document in D
+            k1 = 1.5 #normalization parameter for dj, 1.0 − 2.0
+            b = 0.75 #normalization parameter for document length usually 0.75
+            k2 = 300 #normalization parameter for query q 1 − 1000
+            docf = calc_df(mat) #numpy array of document frequencies for word i
+
+            for q in range(rows): #row number so each row is query
+                for j in range(rows): #column number, each column is d_j
+                    if j != q: #want similarity to itself to be 0, for knn reasons
+                        sum = 0
+                        for i in range(numwords): #mat.shape is number of columns in matrix, aka number of words
+                            docf[i] 
+                            x = np.log((numdocs - docf[i] + 0.5) / (docf[i] + 0.5))
+                            y =  ((k1 + 1) * mat[j,i])  /  (k1 * (1 - b + (b * (dl[j]/avdl))))  #this is so hard to read but just check documentation
+                            z = ((k2 + 1)*mat[q,i])/(k2 + mat[q,i])
+                            #note that mat[j,i] is frequency of word i on document j, similar for q
+                            sum += x * y * z
+                        
+                        dist[q,j] = sum
     print("distance matrix returned")
     return dist #reason for this is kind of stupid, my knn code uses row iteration, for cos it's the exact same since it's already symmetric
     #for okapi i made it have the columns as the query
+
+
+"""
+BELOW IS CHATGPT
+"""
+def calculate_similarity(args):
+    chunk, numdocs, mat, dl, avdl, k1, b, k2, docf = args
+    dist = np.zeros((len(chunk), numdocs))
+    x = np.log((numdocs - docf + 0.5) / (docf + 0.5))
+    for h, q in enumerate(chunk):
+        for j in range(numdocs):
+            y = ((k1 + 1) * mat[j]) / (k1 * (1 - b + (b * (dl[j] / avdl))))
+            z = ((k2 + 1) * mat[q]) / (k2 + mat[q])
+            dist[h, j] = np.sum(x*y*z)
+
+    return dist
+
+
+def calculate_distance_parallel(mat, gt):
+    numdocs = mat.shape[0]
+    numwords = mat.shape[1]
+    dl = gt["file_size"].to_numpy()
+    avdl = np.mean(dl)
+    k1 = 1.5
+    b = 0.75
+    k2 = 300
+    dist = np.zeros((numdocs, numdocs))  # Initialize distance matrix
+    docf = calc_df(mat)
+    # Prepare arguments for parallel processing
+    pool_size = cpu_count()
+    # Use all available CPU cores
+    chunk_size = numdocs // pool_size
+
+# Initialize a list to store the chunks
+    chunks = [list(range(i * chunk_size, (i + 1) * chunk_size)) for i in range(pool_size)]
+    
+    # Adjust the last chunk to cover the remaining documents
+    chunks[-1] += list(range(pool_size * chunk_size, numdocs))
+    args_list = [(chunk, numdocs, mat, dl, avdl, k1, b, k2, docf) for chunk in chunks]
+
+    print(pool_size)
+    with Pool(pool_size) as pool:
+        print("TESTING5")
+        #print(args_list)
+        results = pool.map(calculate_similarity, args_list)
+
+    # Populate the distance matrix
+    results_list = list(results)
+    dist = np.concatenate(results_list, axis = 0)
+
+    print("Distance matrix returned")
+    return dist
 
 """
 just calculate frequency of each word

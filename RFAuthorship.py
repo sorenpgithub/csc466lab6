@@ -262,7 +262,7 @@ def dom_dict(df):
 
 
 def rf(D, numtree, numatt, numdata, threshold):
-    aut = "author_name" #just for simplicity, needed due to redundancies in c45 alg implementation
+    aut = "author_name" #just for simplicity, needed due to redundancies in c45 alg implementationpy
     doms = dom_dict(D)#define!
     print("doms_org: ", doms)
     pred_df = pd.DataFrame() 
