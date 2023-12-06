@@ -50,8 +50,14 @@ Mets [AUTHOR1(tp, fp, misses, precision, recall, f1), AUTHOR2(...)..., TOTAL(tp,
 if silent only print last one
 """
 def output_mets(mets, gt, silent):
-    #print("mets:", mets)
-    print(mets)
+    if not silent: 
+        unique_authors = gt['author_name'].unique().tolist()
+        for i in range(len(mets)-1):
+            print(f'{unique_authors[i]} -- TP:{mets[i][0]}, FP:{mets[i][1]}, TN:{mets[i][2]}, Precision:{mets[i][3]}, Recall:{mets[i][4]}, F1-score:{mets[i][5]} ')
+        print("______________________________________________________________________________")
+        print(f'Overall scores -- TP:{mets[-1][0]}, FP:{mets[-1][1]}, TN:{mets[-1][2]}, Precision:{mets[-1][3]}, Recall:{mets[-1][4]}, F1-score:{mets[-1][5]} ')
+        print("______________________________________________________________________________")
+        print("______________________________________________________________________________")
 
 
 def parse_cmd():
