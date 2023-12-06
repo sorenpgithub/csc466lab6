@@ -40,15 +40,12 @@ def main():
     args = parse_cmd()
 
     dist_name = create_dist_path(args.vectors, args.okapi)#this will create a unique dist name based on the stemming, stop and okapi parameters
-    paths = ["vectors/vectors_stem_stop.csv", "vectors/vectors_stop.csv", "vectors/vectors_stem.csv", "vectors/vectors.csv"]
     gt = parse_gt(args.gt)
-    for path in paths:
-        dist_name = create_dist_path(path, args.okapi)#this will create a unique dist name based on the stemming, stop and okapi parameters
-        vec = parse_vec(path) #numpy matrix where each row is a document and column is a word
-     #ground truth file each row is document with filename, author and size in bytes. 
-        preds = knn(vec, gt, args.k, args.okapi, dist_name, args.distance, args.multi) #returns list of predictions
-        preds = pd.Series(preds) #convert to series so can be written to csv
-        write_output(preds, "knn")
+    vec = parse_vec(args.vectors) #numpy matrix where each row is a document and column is a word
+    #ground truth file each row is document with filename, author and size in bytes. 
+    preds = knn(vec, gt, args.k, args.okapi, dist_name, args.distance, args.multi) #returns list of predictions
+    preds = pd.Series(preds) #convert to series so can be written to csv
+    write_output(preds, "knn")
     
 
 
