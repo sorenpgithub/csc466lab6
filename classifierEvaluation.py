@@ -49,37 +49,37 @@ def generate_mets(cm):
 Mets [AUTHOR1(tp, fp, misses, precision, recall, f1), AUTHOR2(...)..., TOTAL(tp,..f1)]
 if silent only print last one
 """
-def output_mets(mets, silent):
+def output_mets(mets, gt, silent):
     #print("mets:", mets)
-    pass
+    print(mets)
 
 
 def parse_cmd():
     parser = argparse.ArgumentParser(
         prog = "classifierEvaluation.py",
-        description = "Predicts authors given a vectorized version of word stuff blah blah")
+        description = "Outputs a confusion matrix along with a variety of metric given a set of predictions and ground_truth file")
     parser.add_argument("predictions", help="vectors.csv, frequency csv file")
     parser.add_argument("gt", help="ground_truth.csv, ground truth file as defined in documentaiton")
-    parser.add_argument("silent", help="number of of trees in random forest", actions="store_true")
-    parser.add_argument("write", help="number of of trees in random forest", actions="store_true")
+    parser.add_argument("-s", "--silent", help="will only output total metrics", action="store_true")
+    parser.add_argument("-w", "--write", help="will write output to classifieroutputs directory", action="store_true")
+    return parser.parse_args()
 
 
 
 def main():
     args = parse_cmd()
-    path = args.vectors
-    pred = parse_pred(args.pred) #pred is a dataframe such that each row represents the corresponding document prediction in gt with the author name
+    pred = parse_pred(args.predictions) #pred is a dataframe such that each row represents the corresponding document prediction in gt with the author name
     gt = parse_gt(args.gt)
 
-    cm = generate_cm(pred["prediction"], gt) #50 x50 confusion matrix, such that the row repersents predicted and colunn is actual
+    cm = generate_cm(pred["prediction"], gt) #50 x50 confusion matrix, such that the row repersents predicted and colunn is actual, will be numpy array
     mets = generate_mets(cm)
 
-    output_mets(mets, args.silent)
+    output_mets(mets, gt, args.silent)
     
     if args.write:
-        authors = gt["author"].unique() #should be in order of appearence, which should be same as confusion matrix
-        cmdf = pd.DataFrame(cm, columns = authors)
-        write_output(cmdf, "classifier")
+        authors = gt["author_name"].unique() #should be in order of appearence, which should be same as confusion matrix
+        cmdf = pd.DataFrame(cm, columns=authors, index = authors)
+        write_output(cmdf, "classifier", header_b=True)
     
 
 

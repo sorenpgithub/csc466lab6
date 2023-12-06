@@ -49,13 +49,13 @@ Helper function for edge cases
 Constructs and returns a leaf node for a decision tree based on the most frequent class label
 """
 def create_node(D):
-    print("in create_node")
+    #print("in create_node")
     aut = "author_name"
     temp = find_freqlab(D, aut) #should be whatever datatype c_i is
     r = {"leaf":{}}#create node with label of only class label STAR
     r["leaf"]["decision"] = temp[0]
     r["leaf"]["p"] = temp[1]
-    print("r: ", r)
+    #print("r: ", r)
     return r #leaf with decision and prob
 
 """
@@ -63,7 +63,7 @@ Identifies the most frequent class label in the column specified by class_var
 Returns both the label and its probability
 """
 def find_freqlab(D, class_var): #assuming D is df
-    print("in find_freqlab")
+    #print("in find_freqlab")
     values = D[class_var].value_counts(normalize = True)
     c = values.idxmax()
     pr = values[c]
@@ -130,9 +130,9 @@ def selectSplittingAttribute(A, D, threshold): #information gain
             gain[i] = p0 - p_i 
     #print(gain)
     m = max(gain) #fidning the maximal info gain
-    print("max: ",  m)
+    #print("max: ",  m)
     if m > threshold:
-        print("IN IF")
+        #print("IN IF")
         max_ind = gain.index(m) #finding the list index of the maximal info gain
         return A[max_ind] #returns the attribute that had the maximal info gain
     else:
@@ -152,7 +152,7 @@ def c45(D, A, threshold, class_var, doms, current_depth=0, max_depth=None): #goi
     #print(D[class_var].nunique())
     class_var = "author_name" #hardcodede
     if (max_depth is not None and current_depth == max_depth) or D[class_var].nunique() == 1 or (not A):
-        print("HERE")
+        #print("HERE")
     #print("bug")
         T = create_node(D)
 
@@ -174,7 +174,7 @@ def c45(D, A, threshold, class_var, doms, current_depth=0, max_depth=None): #goi
                 
                 if not D_v.empty: #true if D_v \neq \emptyset
                         #print(A_temp)
-                    print("doms2: ", doms)
+                   # print("doms2: ", doms)
                     T_v = c45(D_v, A, threshold, class_var, doms, current_depth + 1, max_depth)
                         #temp = {"edge":{"value":v}}
                     #modify to contain edge value, look at lec06 example
@@ -215,7 +215,7 @@ def parse_cmd():
 
 
 def generate_preds(D, tree, class_var):
-    print("in generate_preds")
+    #print("in generate_preds")
     df_A = D.drop(class_var, axis = 1)#makes new df, not inplace
     pred = []
   
@@ -249,7 +249,7 @@ def generate_preds(D, tree, class_var):
                         leaf = True
                 
                     break #doesnt iterate over redundant edges
-        print(pred)
+        #print(pred)
       #print("broken")
     return pred
 
@@ -264,8 +264,8 @@ def dom_dict(df):
 def rf(D, numtree, numatt, numdata, threshold):
     aut = "author_name" #just for simplicity, needed due to redundancies in c45 alg implementationpy
     doms = dom_dict(D)#define!
-    print("doms_org: ", doms)
-    pred_df = pd.DataFrame() 
+    #print("doms_org: ", doms)
+    pred_df = {}
     
 
     for n in range(numtree):
@@ -277,7 +277,7 @@ def rf(D, numtree, numatt, numdata, threshold):
         
         
         tree = c45(train, test_cols, threshold, aut, doms)
-        print("tree: ", tree)
+        #print("tree: ", tree)
         predictions = generate_preds(D, tree, aut)
         y_pred = pd.Series(predictions)
         
@@ -285,7 +285,7 @@ def rf(D, numtree, numatt, numdata, threshold):
         col_name = f"T{n}"
         pred_df[col_name] = y_pred  #makes new column of predictions
     
-
+    pred_df = pd.DataFrame(pred_df)
     pred_df['mode'] = pred_df.apply(find_mode, axis=1)  #makes new column which is the mode
 
     preds = pred_df["mode"]
@@ -297,11 +297,11 @@ def main():
     path = args.vectors
     vec = parse_vec(path, mat = False) #want vec to be a dataframe
     gt = parse_gt(args.gt)
-    print(vec.head())
+    #print(vec.head())
     D = pd.concat([vec, gt], axis=1) #merges dataframes by concat will be filename and size in here 
     D.drop(["size", "filename"], axis = 1, inplace = True)
     preds = rf(D, args.numtree, args.numatt, args.numdata, args.threshold)
-    print("preds::", preds)
+    #print("preds::", preds)
     #write_output(preds, "rf")    
     write_output_rf(preds, args.numtree, args.numatt, args.numdata)
 

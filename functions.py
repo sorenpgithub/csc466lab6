@@ -29,8 +29,8 @@ generates confusion matrix, should be all 50x50 since actual has every label
 def generate_cm(preds, gt):
     authors = gt["author_name"].unique()
     pred_c = pd.Categorical(preds, categories=authors)
-    actu_c = pd.Categorical(gt["author"], categories=authors)
-    cm = pd.crosstab(pred_c, actu_c, dropna=False) #dataframe, row represents predicted
+    actu_c = pd.Categorical(gt["author_name"], categories=authors)
+    cm = pd.crosstab(pred_c, actu_c, dropna=False).to_numpy() #dataframe, row represents predicted
     return cm
 
 """
@@ -215,11 +215,11 @@ def write_dist_mat(dist_mat, name):
 writes output csv to output directory, name is current time
 should work for series
 """
-def write_output(df, program_name):
+def write_output(df, program_name, header_b = False):
     curr_time = datetime.now()
     name = curr_time.strftime("%d_%H-%M-%S")
     path = f"{program_name}outputs/{name}"
-    df.to_csv(path, index=True, header=False)
+    df.to_csv(path, index=True, header=header_b)
 
 def write_output_rf(df, numTree, numAttr, numData):
     program_name = 'rf'
@@ -263,7 +263,7 @@ def parse_gt(path):
 "prediction csv will be of the form such that each row represents the prediction in order of the gt document"
 def parse_pred(path):
     df = pd.read_csv(path, header=None, index_col=0)
-    df.columns = ["predictions"]
+    df.columns = ["prediction"]
     return df
 
 
