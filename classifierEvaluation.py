@@ -27,7 +27,7 @@ def generate_mets(cm):
         author = []
         author.append(TP[i])
         author.append(FP[i])
-        author.append(TN[i])
+        author.append(FN[i])
         author.append(precision[i])
         author.append(recall[i])
         author.append(f1[i])
@@ -42,7 +42,7 @@ def generate_mets(cm):
     #tot_accuracy = (tot_tp + tot_tn) / (tot_tp + tot_tn + tot_fp + tot_fn) if (tot_tp + tot_tn + tot_fp + tot_fn)>0 else 0
 
 
-    tot = [tot_tp, tot_fp, tot_tn, tot_prec, tot_recall, tot_f1]
+    tot = [tot_tp, tot_fp, 0, tot_prec, tot_recall, tot_f1]
     mets.append(tot)
     return mets
 """
@@ -53,11 +53,12 @@ def output_mets(mets, gt, silent):
     if not silent: 
         unique_authors = gt['author_name'].unique().tolist()
         for i in range(len(mets)-1):
-            print(f'{unique_authors[i]} -- TP:{mets[i][0]}, FP:{mets[i][1]}, TN:{mets[i][2]}, Precision:{mets[i][3]}, Recall:{mets[i][4]}, F1-score:{mets[i][5]} ')
+            print(f'{unique_authors[i]} -- TP:{mets[i][0]}, FP:{mets[i][1]}, FN:{mets[i][2]}, Precision:{mets[i][3]:.3f}, Recall:{mets[i][4]:.3f}, F1-score:{mets[i][5]:.3f}')
         print("______________________________________________________________________________")
-        print(f'Overall scores -- TP:{mets[-1][0]}, FP:{mets[-1][1]}, TN:{mets[-1][2]}, Precision:{mets[-1][3]}, Recall:{mets[-1][4]}, F1-score:{mets[-1][5]} ')
-        print("______________________________________________________________________________")
-        print("______________________________________________________________________________")
+    print(f'Overall scores -- TP:{mets[-1][0]}, FP:{mets[-1][1]}, Accuracy:{mets[-1][0]/ (mets[-1][0] + mets[-1][1])}')
+    #, Precision:{mets[-1][3]}, Recall:{mets[-1][4]}, F1-score:{mets[-1][5]}
+    print("______________________________________________________________________________")
+
 
 
 def parse_cmd():
