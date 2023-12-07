@@ -218,7 +218,7 @@ should work for series
 def write_output(df, program_name, header_b = False):
     curr_time = datetime.now()
     name = curr_time.strftime("%d_%H-%M-%S")
-    path = f"{program_name}outputs/{name}"
+    path = f"{program_name}outputs/{name}.txt"
     df.to_csv(path, index=True, header=header_b)
 
 def write_output_rf(df, numTree, numAttr, numData):
